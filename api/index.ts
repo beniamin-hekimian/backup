@@ -1,3 +1,3 @@
-import app from '../script.js';
-
+// @ts-nocheck
+import app from '../script';
 export default app;
