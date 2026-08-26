@@ -43,7 +43,7 @@ app.use("/chef",chefRoute)
 app.use("/home",homeRoute)
 app.use("/api/v1/home",homeRoute)
 
-app.use((err, req, res, next) =>
+app.use((err: any, req: any, res: any, next: any) =>
 {
 	const statusCode = err.statusCode || (err.code === 'P2025' ? 404 : 500);
 	const status = err.status || (statusCode >= 500 ? 'error' : 'fail');
