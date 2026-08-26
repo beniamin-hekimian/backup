@@ -1,0 +1,228 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum OrderStatus {
+  pending
+  accepted
+  rejected
+  delivered
+}
+
+enum PaymentStatus {
+  unpaid
+  paid
+}
+
+enum ChefRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum MealRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum Role {
+  CUSTOMER
+  CHEF
+  ADMIN
+}
+
+enum MealStatus {
+  AVAILABLE
+  SOLD_OUT
+  DELETED
+}
+
+model User {
+  id String @id @default(uuid()) @db.Uuid
+
+  full_name     String @db.VarChar(255)
+  email         String @unique @db.VarChar(255)
+  password_hash String @db.VarChar(255)
+
+  role Role @default(CUSTOMER)
+
+  phone                   String?
+  profile_image           String?
+  bio                     String?
+  chefRequestStatus       ChefRequestStatus?
+  chefRequestRejectReason String?
+  passwordChangedAt       DateTime?
+  passwordResetToken      String?
+  passwordResetExpires    DateTime?
+  location                String?
+  createdAt               DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt               DateTime           @updatedAt @db.Timestamptz(6)
+
+  profile Profile?
+
+  meals Meal[] @relation("Offers")
+
+  likes    Like[]
+  comments Comment[]
+  orders     Order[] @relation("CustomerOrders")
+  chefOrders Order[] @relation("ChefOrders")
+
+  following Follow[] @relation("Follower")
+  followers Follow[] @relation("Following")
+
+  @@map("users")
+}
+
+model Profile {
+  id       String  @id @default(uuid()) @db.Uuid
+  about_me String?
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  user_id String @unique @db.Uuid
+  user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+model Meal {
+  id String @id @default(uuid()) @db.Uuid
+
+  title                   String
+  photo                   String?
+  mealRequestStatus       MealRequestStatus?
+  mealRequestRejectReason String?
+  price                   Decimal            @db.Decimal(10, 2)
+  content                 String
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  user_id String @db.Uuid
+  user    User   @relation("Offers", fields: [user_id], references: [id], onDelete: Cascade)
+
+  likes      Like[]
+  comments   Comment[]
+  tags       MealTag[]
+  orderItems OrderItem[]
+
+  @@index([user_id])
+  @@index([createdAt])
+  @@map("meals")
+}
+
+model Tag {
+  id   String @id @default(uuid()) @db.Uuid
+  name String @unique
+
+  meals MealTag[]
+
+  @@map("tags")
+}
+
+model MealTag {
+  meal_id String @db.Uuid
+  tag_id  String @db.Uuid
+
+  meal Meal @relation(fields: [meal_id], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+
+  @@id([meal_id, tag_id])
+  @@map("meal_tags")
+}
+
+model Like {
+  user_id String @db.Uuid
+  meal_id String @db.Uuid
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  meal Meal @relation(fields: [meal_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, meal_id])
+  @@map("likes")
+}
+
+model Comment {
+  id String @id @default(uuid()) @db.Uuid
+
+  content   String
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  user_id String @db.Uuid
+  meal_id String @db.Uuid
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  meal Meal @relation(fields: [meal_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([meal_id])
+  @@index([createdAt])
+  @@map("comments")
+}
+
+model Order {
+  id String @id @default(uuid()) @db.Uuid
+
+  userId        String        @map("user_id") @db.Uuid
+  chefId        String?       @map("chef_id") @db.Uuid
+  status        OrderStatus?
+  paymentStatus PaymentStatus @default(unpaid) @map("payment_status")
+  total         Decimal       @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user  User  @relation("CustomerOrders", fields: [userId], references: [id], onDelete: Cascade)
+  chef  User? @relation("ChefOrders", fields: [chefId], references: [id], onDelete: Cascade)
+  items OrderItem[]
+
+  @@index([userId])
+  @@index([chefId])
+  @@index([paymentStatus])
+  @@index([status])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id String @id @default(uuid()) @db.Uuid
+
+  orderId String @db.Uuid
+  mealId  String @db.Uuid
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  meal  Meal  @relation(fields: [mealId], references: [id], onDelete: Cascade)
+
+  mealName String
+  price    Decimal @db.Decimal(10, 2)
+  quantity Int
+
+  @@index([orderId])
+  @@index([mealId])
+  @@map("order_items")
+}
+
+model Follow {
+  followerId  String @db.Uuid
+  followingId String @db.Uuid
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  follower  User @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+  @@map("follows")
+}
