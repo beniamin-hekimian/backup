@@ -2,7 +2,7 @@ import express from "express";
 
 import * as mealController from "../controllers/mealController.js";
 import * as chefController from "../controllers/chefController.js"
-import * as authController from '../controllers/authController'
+import * as authController from '../controllers/authController.js'
 const router = express.Router();
 
 // Public route - no auth required

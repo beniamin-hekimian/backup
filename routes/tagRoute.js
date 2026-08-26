@@ -1,6 +1,6 @@
 import express from 'express'
 import * as tagController from '../controllers/tagController.js'
-import * as authController from '../controllers/authController'
+import * as authController from '../controllers/authController.js'
 const router = express.Router()
 router.use(authController.protect);
 router.route('/')

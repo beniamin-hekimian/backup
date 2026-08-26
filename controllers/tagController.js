@@ -1,4 +1,4 @@
-import { prisma } from "../lib/prisma"
+import { prisma } from "../lib/prisma.js"
 import catchAsync from './../utils/catchAsync.js'
 import appError from './../utils/appError.js';
 

@@ -19,7 +19,8 @@ main()
  */ 
  
 import express from 'express'
-import userRoute from './routes/userRoute'
+import cors from 'cors'
+import userRoute from './routes/userRoute.js'
 import tagRoute from './routes/tagRoute.js'
 import mealRoute from './routes/mealRoute.js'
 import adminRoute from "./routes/adminRoute.js"
@@ -27,11 +28,10 @@ import mealTagRoute from "./routes/mealTagRoutes.js"
 import orderRoute from "./routes/orderRoute.js"
 import chefRoute from "./routes/chefRoute.js"
 import homeRoute from "./routes/homeRoute.js"
-//import orderRoute from './routes/orderRoute.js'
-//import { prisma } from "./lib/prisma"
 const PORT = process.env.PORT || 3000;
 
 const app= express();
+app.use(cors());
 app.use(express.json());
 app.use('/user',userRoute)
 app.use('/admin',adminRoute)
@@ -42,10 +42,7 @@ app.use("/order",orderRoute);
 app.use("/chef",chefRoute)
 app.use("/home",homeRoute)
 app.use("/api/v1/home",homeRoute)
-app.listen(PORT, () =>
-{
-    console.log(`server is running on port ${PORT}`);
-});
+
 app.use((err, req, res, next) =>
 {
 	const statusCode = err.statusCode || (err.code === 'P2025' ? 404 : 500);
@@ -55,3 +52,12 @@ app.use((err, req, res, next) =>
 		message: err.message || 'Internal server error',
 	});
 });
+
+if (process.env.VERCEL !== "1") {
+  app.listen(PORT, () =>
+  {
+      console.log(`server is running on port ${PORT}`);
+  });
+}
+
+export default app;
